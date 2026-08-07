@@ -7,7 +7,7 @@ import {
   IconDeviceFloppy,
   IconRefresh,
 } from "@tabler/icons-react";
-
+import ImageUpload from "@/components/ImageUpload/ImageUpload";
 export default function ProductForm() {
 
   const [formData, setFormData] = useState({
@@ -32,7 +32,14 @@ export default function ProductForm() {
     seoTitle: "",
     seoDescription: "",
   });
+const handleImageChange = (e) => {
+  const { name, value } = e.target;
 
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
   const handleChange = (e) => {
 
     const { name, value, type, checked } = e.target;
@@ -389,33 +396,20 @@ export default function ProductForm() {
 
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
 
-        <h2 className="text-xl font-bold mb-6">
-          Product Images
-        </h2>
+  <h2 className="text-xl font-bold mb-6">
+    Product Images
+  </h2>
 
-        <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl h-60 cursor-pointer hover:border-green-500 transition">
+  <ImageUpload
+    label="Product Images"
+    name="images"
+    value={formData.images}
+    onChange={handleImageChange}
+    multiple={true}
+    required
+  />
 
-          <input
-            type="file"
-            multiple
-            className="hidden"
-          />
-
-          <div className="text-center">
-
-            <p className="text-lg font-semibold text-gray-700">
-              Click to Upload Images
-            </p>
-
-            <p className="text-sm text-gray-500 mt-2">
-              PNG, JPG, WEBP supported
-            </p>
-
-          </div>
-
-        </label>
-
-      </div>
+</div>
 
       {/* Product Settings */}
 

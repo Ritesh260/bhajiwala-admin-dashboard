@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   IconArrowLeft,
 } from "@tabler/icons-react";
-
+import ImageUpload from "@/components/ImageUpload/ImageUpload";
 
 export default function CategoryForm() {
 
@@ -26,7 +26,14 @@ export default function CategoryForm() {
     seoDescription: "",
   });
 
+const handleImageChange = (e) => {
+  const { name, value } = e.target;
 
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
   const handleChange = (e) => {
 
     const { name, value, type, checked } = e.target;
@@ -249,98 +256,36 @@ export default function CategoryForm() {
 
 
       </div>
-            {/* Images */}
-
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
-
-        <h2 className="text-xl font-bold mb-6">
-          Category Images
-        </h2>
 
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Images */}
 
+<div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
 
-          {/* Category Image */}
+  <h2 className="text-xl font-bold mb-6">
+    Category Images
+  </h2>
 
-          <div>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-            <label className="block text-sm font-medium mb-3">
-              Category Image
-            </label>
+    <ImageUpload
+      label="Category Image"
+      name="image"
+      value={formData.image}
+      onChange={handleImageChange}
+      required
+    />
 
+    <ImageUpload
+      label="Banner Image"
+      name="banner"
+      value={formData.banner}
+      onChange={handleImageChange}
+    />
 
-            <label className="h-48 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center cursor-pointer hover:border-green-600 transition">
+  </div>
 
-              <input
-                type="file"
-                className="hidden"
-              />
-
-
-              <div className="text-center">
-
-                <p className="font-semibold text-gray-700">
-                  Upload Category Image
-                </p>
-
-                <p className="text-sm text-gray-500 mt-2">
-                  PNG, JPG, WEBP
-                </p>
-
-              </div>
-
-
-            </label>
-
-
-          </div>
-
-
-
-          {/* Banner Image */}
-
-
-          <div>
-
-            <label className="block text-sm font-medium mb-3">
-              Banner Image
-            </label>
-
-
-            <label className="h-48 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center cursor-pointer hover:border-green-600 transition">
-
-              <input
-                type="file"
-                className="hidden"
-              />
-
-
-              <div className="text-center">
-
-                <p className="font-semibold text-gray-700">
-                  Upload Banner Image
-                </p>
-
-
-                <p className="text-sm text-gray-500 mt-2">
-                  Recommended 1200x400
-                </p>
-
-
-              </div>
-
-
-            </label>
-
-
-          </div>
-
-
-        </div>
-
-
-      </div>
+</div>
 
 
 

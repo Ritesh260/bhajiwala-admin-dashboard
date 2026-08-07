@@ -85,7 +85,8 @@ const dashboardMenu = [
     id: "coupons",
     title: "Coupons",
     icon: IconTicket,
-    href: "/dashboard/coupons",
+    // href: "/dashboard/coupons",/
+    href: "#",
     order: 6,
   },
 
@@ -101,7 +102,8 @@ const dashboardMenu = [
     id: "reviews",
     title: "Reviews",
     icon: IconMessageCircle,
-    href: "/dashboard/reviews",
+    // href: "/dashboard/reviews",
+    href: "#",
     order: 8,
   },
 
@@ -109,7 +111,8 @@ const dashboardMenu = [
     id: "analytics",
     title: "Analytics",
     icon: IconChartBar,
-    href: "/dashboard/analytics",
+    // href: "/dashboard/analytics",
+    href: "#",
     order: 9,
   },
 
@@ -125,7 +128,8 @@ const dashboardMenu = [
     id: "profile",
     title: "Profile",
     icon: IconUser,
-    href: "/dashboard/profile",
+    // href: "/dashboard/profile",
+    href: "#",
     order: 11,
   },
 ];
