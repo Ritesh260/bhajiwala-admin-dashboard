@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   IconCloudUpload,
   IconPhoto,
@@ -23,6 +23,10 @@ export default function ImageUpload({
   const [preview, setPreview] = useState(value);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+  setPreview(value || null);
+}, [value]);
 
   const openFilePicker = () => {
     inputRef.current?.click();

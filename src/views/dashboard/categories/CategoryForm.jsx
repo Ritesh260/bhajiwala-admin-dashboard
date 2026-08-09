@@ -1,13 +1,18 @@
 "use client";
+import { useEffect, useState } from "react";
 
-import { useState } from "react";
 import Link from "next/link";
 import {
   IconArrowLeft,
 } from "@tabler/icons-react";
 import ImageUpload from "@/components/ImageUpload/ImageUpload";
+import {
+  createCategory,
+  getCategoryById,
+  updateCategory,
+} from "@/api/category_api";
 
-export default function CategoryForm() {
+export default function CategoryForm({ id }) {
 
   const [formData, setFormData] = useState({
     name: "",
@@ -25,6 +30,35 @@ export default function CategoryForm() {
     seoTitle: "",
     seoDescription: "",
   });
+  useEffect(() => {
+  if (!id) return;
+
+  const fetchCategory = async () => {
+    try {
+      const response = await getCategoryById(id);
+
+      const category = response.category;
+
+      setFormData({
+        name: category.name || "",
+        slug: category.slug || "",
+        parent: category.parent?._id || "",
+        shortDescription: category.shortDescription || "",
+        description: category.description || "",
+        image: category.image || "",
+        banner: category.banner || "",
+        featured: category.featured || false,
+        status: category.status || "Active",
+        seoTitle: category.seoTitle || "",
+        seoDescription: category.seoDescription || "",
+      });
+    } catch (error) {
+      console.error("Failed to fetch category:", error);
+    }
+  };
+
+  fetchCategory();
+}, [id]);
 
 const handleImageChange = (e) => {
   const { name, value } = e.target;
@@ -47,11 +81,79 @@ const handleImageChange = (e) => {
     }));
 
   };
+  
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
+  try {
+    const data = new FormData();
+
+    data.append("name", formData.name);
+    data.append("slug", formData.slug);
+
+    // Parent abhi nahi bhej rahe
+    if (formData.parent) {
+      data.append("parent", formData.parent);
+    }
+
+    data.append("shortDescription", formData.shortDescription);
+    data.append("description", formData.description);
+    data.append("featured", formData.featured);
+    data.append("status", formData.status);
+    data.append("seoTitle", formData.seoTitle);
+    data.append("seoDescription", formData.seoDescription);
+
+    // Sirf NEW image select hui hai tab bhejna
+    if (formData.image instanceof File) {
+      data.append("image", formData.image);
+    }
+
+    // Sirf NEW banner select hua hai tab bhejna
+    if (formData.banner instanceof File) {
+      data.append("banner", formData.banner);
+    }
+
+    let response;
+
+    if (id) {
+      // EDIT
+      response = await updateCategory(id, data);
+
+      console.log("Category Updated:", response);
+
+      alert("Category updated successfully");
+    } else {
+      // CREATE
+      response = await createCategory(data);
+
+      console.log("Category Created:", response);
+
+      alert("Category created successfully");
+    }
+
+  } catch (error) {
+    console.error(
+      id
+        ? "Update Category Error:"
+        : "Create Category Error:",
+      error
+    );
+
+    alert(
+      error.response?.data?.message ||
+      (id
+        ? "Failed to update category"
+        : "Failed to create category")
+    );
+  }
+};
 
   return (
 
-    <div className="space-y-6">
+    <form
+    onSubmit={handleSubmit}
+    className="space-y-6"
+  >
 
 
       {/* Header */}
@@ -71,17 +173,15 @@ const handleImageChange = (e) => {
 
 
         <h1 className="text-3xl font-bold text-gray-900 mt-3">
-
-          Add Category
-
-        </h1>
+  {id ? "Edit Category" : "Add Category"}
+</h1>
 
 
         <p className="text-gray-500 mt-1">
-
-          Create and manage product categories
-
-        </p>
+  {id
+    ? "Update category information"
+    : "Create and manage product categories"}
+</p>
 
 
       </div>
@@ -468,13 +568,11 @@ const handleImageChange = (e) => {
 
 
           <button
-            type="submit"
-            className="px-6 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white transition font-semibold"
-          >
-
-            Save Category
-
-          </button>
+  type="submit"
+  className="px-6 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white transition font-semibold"
+>
+  {id ? "Update Category" : "Save Category"}
+</button>
 
 
 
@@ -485,7 +583,7 @@ const handleImageChange = (e) => {
 
 
 
-    </div>
+    </form>
 
   );
 

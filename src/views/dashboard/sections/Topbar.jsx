@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+
 import {
   IconMenu2,
   IconSearch,
@@ -13,10 +15,19 @@ import {
   IconSettings,
   IconLogout,
 } from "@tabler/icons-react";
-
 export default function Topbar() {
+  const router = useRouter();
+
   const [darkMode, setDarkMode] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const handleLogout = () => {
+  localStorage.removeItem("adminToken");
+  localStorage.removeItem("adminData");
+
+  setProfileOpen(false);
+
+  router.replace("/login");
+};
 
   return (
     <header className="h-20 bg-[#F8FAF5]/90 backdrop-blur-xl border-b border-gray-200 px-4 lg:px-8 flex items-center justify-between">
@@ -144,13 +155,14 @@ export default function Topbar() {
 
               </button>
 
-              <button className="w-full flex items-center gap-3 px-5 py-4 text-red-500 hover:bg-red-50">
+             <button
+  onClick={handleLogout}
+  className="w-full flex items-center gap-3 px-5 py-4 text-red-500 hover:bg-red-50 transition"
+>
+  <IconLogout size={20} />
 
-                <IconLogout size={20} />
-
-                Logout
-
-              </button>
+  Logout
+</button>
 
             </div>
 
