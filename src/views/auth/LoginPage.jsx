@@ -1,7 +1,10 @@
+
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+
 import {
   IconEye,
   IconEyeOff,
@@ -11,16 +14,29 @@ import {
   IconLeaf,
 } from "@tabler/icons-react";
 
-export default function LoginPage() {
-  const [showPassword, setShowPassword] = useState(false);
-const router = useRouter();
+import { loginAdmin } from "@/api/auth_api";
 
-const [loading, setLoading] = useState(false);
-const [error, setError] = useState("");
+export default function LoginPage() {
+  const router = useRouter();
+
+  // ==============================
+  // STATES
+  // ==============================
+
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [loading, setLoading] = useState(false);
+
+  const [error, setError] = useState("");
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+
+  // ==============================
+  // HANDLE INPUT CHANGE
+  // ==============================
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,54 +45,74 @@ const [error, setError] = useState("");
       ...prev,
       [name]: value,
     }));
+
+    // Remove previous error when user starts typing
+    if (error) {
+      setError("");
+    }
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
+  // ==============================
+  // HANDLE LOGIN
+  // ==============================
 
-  setError("");
-  setLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  try {
-    const response = await fetch(
-      "http://localhost:5000/api/auth/login",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-        }),
+    setError("");
+    setLoading(true);
+
+    try {
+      // ==============================
+      // LOGIN API
+      // ==============================
+
+      const data = await loginAdmin({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      // ==============================
+      // SAVE JWT TOKEN
+      // ==============================
+
+      if (data.token) {
+        localStorage.setItem("adminToken", data.token);
       }
-    );
 
-    const data = await response.json();
+      // ==============================
+      // SAVE ADMIN DATA
+      // ==============================
 
-    if (!response.ok) {
-      throw new Error(
-        data.message || "Invalid email or password"
+      if (data.admin) {
+        localStorage.setItem(
+          "adminData",
+          JSON.stringify(data.admin)
+        );
+      }
+
+      // ==============================
+      // REDIRECT TO DASHBOARD
+      // ==============================
+
+      router.replace("/dashboard");
+
+    } catch (error) {
+      console.error("Login Error:", error);
+
+      setError(
+        error.response?.data?.message ||
+        error.message ||
+        "Invalid email or password"
       );
+    } finally {
+      setLoading(false);
     }
+  };
 
-    localStorage.setItem("adminToken", data.token);
-
-    if (data.admin) {
-      localStorage.setItem(
-        "adminData",
-        JSON.stringify(data.admin)
-      );
-    }
-
-    router.push("/dashboard");
-
-  } catch (error) {
-    setError(error.message);
-  } finally {
-    setLoading(false);
-  }
-};
+  // ==============================
+  // UI
+  // ==============================
 
   return (
     <main className="min-h-screen bg-[#f6fbf6] flex items-center justify-center p-4 sm:p-6">
@@ -108,19 +144,29 @@ const [error, setError] = useState("");
 
               <div className="flex items-center gap-3">
 
-               <div className="w-11 h-11 rounded-2xl bg-green-600 flex items-center justify-center shadow-lg">
-  <IconLeaf
-    size={24}
-    className="text-white"
-  />
-</div>
+                <div className="w-11 h-11 rounded-2xl bg-green-600 flex items-center justify-center shadow-lg">
+
+                  <IconLeaf
+                    size={24}
+                    className="text-white"
+                  />
+
+                </div>
 
                 <div>
 
                   <h1 className="text-xl font-bold">
-  <span className="text-black">Bhaji</span>
-  <span className="text-green-600">Wala</span>
-</h1>
+
+                    <span className="text-black">
+                      Bhaji
+                    </span>
+
+                    <span className="text-green-600">
+                      Wala
+                    </span>
+
+                  </h1>
+
                   <p className="text-xs text-white/80">
                     Fresh Vegetable Mart
                   </p>
@@ -130,7 +176,6 @@ const [error, setError] = useState("");
               </div>
 
             </div>
-
 
             {/* Bottom Content */}
 
@@ -161,7 +206,6 @@ const [error, setError] = useState("");
 
           </div>
 
-
           {/* ================= RIGHT SIDE ================= */}
 
           <div className="flex items-center justify-center p-6 sm:p-10 lg:p-14">
@@ -182,7 +226,7 @@ const [error, setError] = useState("");
                 </div>
 
                 <p className="text-sm font-semibold text-green-600 mb-2">
-                  BHajiWala ADMIN
+                  BHAJIWALA ADMIN
                 </p>
 
                 <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
@@ -194,7 +238,6 @@ const [error, setError] = useState("");
                 </p>
 
               </div>
-
 
               {/* Login Form */}
 
@@ -229,13 +272,13 @@ const [error, setError] = useState("");
                       onChange={handleChange}
                       placeholder="admin@bhajiwala.com"
                       required
-                      className="w-full h-14 rounded-2xl border border-gray-200 bg-gray-50 pl-12 pr-4 text-gray-900 outline-none transition focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-100"
+                      disabled={loading}
+                      className="w-full h-14 rounded-2xl border border-gray-200 bg-gray-50 pl-12 pr-4 text-gray-900 outline-none transition focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-100 disabled:opacity-60"
                     />
 
                   </div>
 
                 </div>
-
 
                 {/* Password */}
 
@@ -268,21 +311,29 @@ const [error, setError] = useState("");
 
                     <input
                       id="password"
-                      type={showPassword ? "text" : "password"}
+                      type={
+                        showPassword
+                          ? "text"
+                          : "password"
+                      }
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
                       placeholder="Enter your password"
                       required
-                      className="w-full h-14 rounded-2xl border border-gray-200 bg-gray-50 pl-12 pr-12 text-gray-900 outline-none transition focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-100"
+                      disabled={loading}
+                      className="w-full h-14 rounded-2xl border border-gray-200 bg-gray-50 pl-12 pr-12 text-gray-900 outline-none transition focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-100 disabled:opacity-60"
                     />
 
                     <button
                       type="button"
                       onClick={() =>
-                        setShowPassword((prev) => !prev)
+                        setShowPassword(
+                          (prev) => !prev
+                        )
                       }
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-green-600 transition"
+                      disabled={loading}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-green-600 transition disabled:opacity-50"
                       aria-label={
                         showPassword
                           ? "Hide password"
@@ -302,8 +353,7 @@ const [error, setError] = useState("");
 
                 </div>
 
-
-                {/* Remember */}
+                {/* Remember Me */}
 
                 <div className="flex items-center gap-3">
 
@@ -311,6 +361,7 @@ const [error, setError] = useState("");
                     id="remember"
                     type="checkbox"
                     className="w-4 h-4 accent-green-600"
+                    disabled={loading}
                   />
 
                   <label
@@ -321,42 +372,54 @@ const [error, setError] = useState("");
                   </label>
 
                 </div>
-{error && (
-  <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">
-    {error}
-  </div>
-)}
+
+                {/* Error */}
+
+                {error && (
+
+                  <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">
+
+                    {error}
+
+                  </div>
+
+                )}
 
                 {/* Login Button */}
 
                 <button
-  type="submit"
-  disabled={loading}
-  className="w-full h-14 rounded-2xl bg-green-600 hover:bg-green-700 active:bg-green-800 disabled:bg-green-400 disabled:cursor-not-allowed text-white font-semibold flex items-center justify-center gap-2 transition shadow-lg shadow-green-600/20"
->
-  {loading ? (
-    <>
-      <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-      Signing in...
-    </>
-  ) : (
-    <>
-      Login to Dashboard
-      <IconArrowRight size={20} />
-    </>
-  )}
-</button>
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-14 rounded-2xl bg-green-600 hover:bg-green-700 active:bg-green-800 disabled:bg-green-400 disabled:cursor-not-allowed text-white font-semibold flex items-center justify-center gap-2 transition shadow-lg shadow-green-600/20"
+                >
+
+                  {loading ? (
+                    <>
+                      <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+
+                      Signing in...
+                    </>
+                  ) : (
+                    <>
+                      Login to Dashboard
+
+                      <IconArrowRight size={20} />
+                    </>
+                  )}
+
+                </button>
 
               </form>
-
 
               {/* Footer */}
 
               <div className="mt-8 pt-6 border-t border-gray-100 text-center">
 
                 <p className="text-xs text-gray-400">
+
                   © {new Date().getFullYear()} BhajiWala.
                   Admin Dashboard
+
                 </p>
 
               </div>
@@ -372,3 +435,4 @@ const [error, setError] = useState("");
     </main>
   );
 }
+
