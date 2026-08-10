@@ -216,18 +216,20 @@ export default function LoginPage() {
 
               <div className="mb-8">
 
-                <div className="w-14 h-14 rounded-2xl bg-green-50 flex items-center justify-center mb-5">
+                <div className="w-11 h-11 rounded-2xl bg-green-600 flex items-center justify-center shadow-lg mb-1">
 
                   <IconLeaf
-                    size={28}
-                    className="text-green-600"
+                    size={20}
+                    className="text-white"
                   />
 
                 </div>
 
-                <p className="text-sm font-semibold text-green-600 mb-2">
-                  BHAJIWALA ADMIN
-                </p>
+                <p className="text-1xl font-extrabold tracking-tight mb-2">
+  <span className="text-black">BHAJI</span>
+  <span className="text-green-600">WALA</span>
+  <span className="text-gray-900 ml-2">ADMIN</span>
+</p>
 
                 <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
                   Welcome back 👋
