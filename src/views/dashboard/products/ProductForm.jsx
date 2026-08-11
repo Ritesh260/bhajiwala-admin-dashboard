@@ -44,7 +44,11 @@ export default function ProductForm({ id }) {
 
     sku: "",
     stock: "",
-    unit: "Kg",
+unitValue: 1,
+unit: "Kg",
+
+variants: [],
+
 
     images: [],
 
@@ -106,10 +110,19 @@ export default function ProductForm({ id }) {
               : "",
           sku: product.sku || "",
           stock:
-            product.stock !== undefined
-              ? product.stock
-              : "",
-          unit: product.unit || "Kg",
+  product.stock !== undefined
+    ? product.stock
+    : "",
+
+unitValue:
+  product.unitValue !== undefined
+    ? product.unitValue
+    : 1,
+
+unit: product.unit || "Kg",
+variants: Array.isArray(product.variants)
+  ? product.variants
+  : [],
           images: product.images || [],
           featured: Boolean(product.featured),
           status: product.status || "Active",
@@ -200,6 +213,48 @@ export default function ProductForm({ id }) {
     }));
   };
 
+  const handleVariantChange = (index, field, value) => {
+  setFormData((prev) => {
+    const variants = [...prev.variants];
+
+    variants[index] = {
+      ...variants[index],
+      [field]:
+        field === "unitValue" || field === "price"
+          ? value
+          : value,
+    };
+
+    return {
+      ...prev,
+      variants,
+    };
+  });
+};
+
+const addVariant = () => {
+  setFormData((prev) => ({
+    ...prev,
+    variants: [
+      ...prev.variants,
+      {
+        unitValue: "",
+        unit: "Kg",
+        price: "",
+      },
+    ],
+  }));
+};
+
+const removeVariant = (index) => {
+  setFormData((prev) => ({
+    ...prev,
+    variants: prev.variants.filter(
+      (_, i) => i !== index
+    ),
+  }));
+};
+
   // ==========================================
   // RESET FORM
   // ==========================================
@@ -220,7 +275,9 @@ export default function ProductForm({ id }) {
 
       sku: "",
       stock: "",
-      unit: "Kg",
+unitValue: 1,
+unit: "Kg",
+variants: [],
 
       images: [],
 
@@ -333,15 +390,23 @@ export default function ProductForm({ id }) {
       );
 
       data.append(
-        "stock",
-        formData.stock
-      );
+  "stock",
+  formData.stock
+);
 
-      data.append(
-        "unit",
-        formData.unit
-      );
+data.append(
+  "unitValue",
+  formData.unitValue
+);
 
+data.append(
+  "unit",
+  formData.unit
+);
+data.append(
+  "variants",
+  JSON.stringify(formData.variants)
+);
       data.append(
         "featured",
         String(formData.featured)
@@ -720,7 +785,7 @@ export default function ProductForm({ id }) {
           Inventory
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
 
           {/* SKU */}
 
@@ -760,6 +825,30 @@ export default function ProductForm({ id }) {
             />
 
           </div>
+          {/* Unit Value */}
+
+<div>
+
+  <label className="block text-sm font-medium mb-2">
+    Quantity Per Unit
+  </label>
+
+  <input
+    type="number"
+    name="unitValue"
+    value={formData.unitValue}
+    onChange={handleChange}
+    placeholder="1"
+    min="0.001"
+    step="0.001"
+    className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-green-600"
+  />
+
+  <p className="text-xs text-gray-500 mt-2">
+    Example: 1 Kg, 500 Gram, 1 Piece
+  </p>
+
+</div>
 
           {/* Unit */}
 
@@ -801,6 +890,161 @@ export default function ProductForm({ id }) {
           </div>
 
         </div>
+
+        {/* PRODUCT VARIANTS */}
+
+<div className="mt-8 pt-8 border-t border-gray-100">
+
+  <div className="flex items-center justify-between mb-5">
+
+    <div>
+      <h3 className="text-lg font-bold text-gray-900">
+        Product Variants
+      </h3>
+
+      <p className="text-sm text-gray-500 mt-1">
+        Add different quantities and prices for this product.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      onClick={addVariant}
+      className="px-4 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700 transition"
+    >
+      + Add Variant
+    </button>
+
+  </div>
+
+  {formData.variants.length === 0 ? (
+    <div className="rounded-xl border border-dashed border-gray-300 p-6 text-center text-gray-500">
+      No variants added yet.
+    </div>
+  ) : (
+    <div className="space-y-4">
+
+      {formData.variants.map((variant, index) => (
+
+        <div
+          key={index}
+          className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end p-4 bg-gray-50 rounded-2xl border border-gray-100"
+        >
+
+          {/* Quantity */}
+
+          <div>
+
+            <label className="block text-sm font-medium mb-2">
+              Quantity
+            </label>
+
+            <input
+              type="number"
+              min="0.001"
+              step="0.001"
+              value={variant.unitValue}
+              onChange={(e) =>
+                handleVariantChange(
+                  index,
+                  "unitValue",
+                  e.target.value
+                )
+              }
+              placeholder="500"
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-green-600"
+            />
+
+          </div>
+
+          {/* Unit */}
+
+          <div>
+
+            <label className="block text-sm font-medium mb-2">
+              Unit
+            </label>
+
+            <select
+              value={variant.unit}
+              onChange={(e) =>
+                handleVariantChange(
+                  index,
+                  "unit",
+                  e.target.value
+                )
+              }
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-green-600"
+            >
+
+              <option value="Gram">
+                Gram
+              </option>
+
+              <option value="Kg">
+                Kg
+              </option>
+
+              <option value="Piece">
+                Piece
+              </option>
+
+              <option value="Dozen">
+                Dozen
+              </option>
+
+              <option value="Bundle">
+                Bundle
+              </option>
+
+            </select>
+
+          </div>
+
+          {/* Price */}
+
+          <div>
+
+            <label className="block text-sm font-medium mb-2">
+              Price
+            </label>
+
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={variant.price}
+              onChange={(e) =>
+                handleVariantChange(
+                  index,
+                  "price",
+                  e.target.value
+                )
+              }
+              placeholder="40"
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-green-600"
+            />
+
+          </div>
+
+          {/* Remove */}
+
+          <button
+            type="button"
+            onClick={() => removeVariant(index)}
+            className="w-full md:w-auto px-4 py-3 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition"
+          >
+            Remove
+          </button>
+
+        </div>
+
+      ))}
+
+    </div>
+  )}
+
+</div>
 
       </div>
 

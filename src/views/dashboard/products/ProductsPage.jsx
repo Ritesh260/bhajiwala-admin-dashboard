@@ -468,7 +468,7 @@ export default function ProductsPage() {
 
                     <td className="px-5 py-4">
 
-                      <span
+                        <span
                         className={`px-3 py-1 rounded-full text-xs font-semibold ${
                           product.stock < 20
                             ? "bg-red-100 text-red-600"
@@ -476,7 +476,9 @@ export default function ProductsPage() {
                         }`}
                       >
                         {product.stock || 0}{" "}
-                        {product.unit || "Qty"}
+                        {Array.isArray(product.units) && product.units.length > 0
+                          ? product.units.join(", ")
+                          : product.unit || "Qty"}
                       </span>
 
                     </td>

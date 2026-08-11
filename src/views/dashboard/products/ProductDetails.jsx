@@ -123,7 +123,10 @@ export default function ProductDetails({ id }) {
             <div className="flex items-center gap-3 text-gray-500">
               <IconBox size={18} />
               <span>
-                SKU: {product.sku || "-"} • Stock: {product.stock || 0} {product.unit || "Qty"}
+                SKU: {product.sku || "-"} • Stock: {product.stock || 0}{" "}
+                {Array.isArray(product.units) && product.units.length > 0
+                  ? product.units.join(", ")
+                  : product.unit || "Qty"}
               </span>
             </div>
             <div className="flex items-center gap-3 text-gray-500">
@@ -202,6 +205,18 @@ export default function ProductDetails({ id }) {
               </div>
             </div>
           </div>
+          {Array.isArray(product.units) && product.units.length > 0 && (
+            <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+              <h2 className="text-xl font-bold text-gray-900">Units / Variants</h2>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {product.units.map((u, i) => (
+                  <span key={i} className="px-3 py-1 rounded-full bg-gray-50 text-gray-700 text-sm">
+                    {u}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
