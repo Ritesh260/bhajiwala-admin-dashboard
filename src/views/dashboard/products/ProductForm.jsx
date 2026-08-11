@@ -1,20 +1,40 @@
+
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   IconArrowLeft,
   IconDeviceFloppy,
   IconRefresh,
 } from "@tabler/icons-react";
+
 import ImageUpload from "@/components/ImageUpload/ImageUpload";
-export default function ProductForm() {
+
+import {
+  getCategories,
+} from "@/api/category_api";
+
+import {
+  createProduct,
+  updateProduct,
+  getProductById,
+} from "@/api/product_api";
+
+export default function ProductForm({ id }) {
+  const router = useRouter();
+
+  // ==========================================
+  // FORM DATA
+  // ==========================================
 
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
     category: "",
     brand: "",
+
     shortDescription: "",
     description: "",
 
@@ -26,23 +46,150 @@ export default function ProductForm() {
     stock: "",
     unit: "Kg",
 
+    images: [],
+
     featured: false,
     status: "Active",
 
     seoTitle: "",
     seoDescription: "",
   });
-const handleImageChange = (e) => {
-  const { name, value } = e.target;
 
-  setFormData((prev) => ({
-    ...prev,
-    [name]: value,
-  }));
-};
+  // ==========================================
+  // STATES
+  // ==========================================
+
+  const [categories, setCategories] = useState([]);
+
+  const [loadingCategories, setLoadingCategories] =
+    useState(true);
+
+  const [loading, setLoading] = useState(false);
+
+  const [error, setError] = useState("");
+  const [loadingProduct, setLoadingProduct] = useState(false);
+
+  const isEditMode = Boolean(id);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchProduct = async () => {
+      try {
+        setLoadingProduct(true);
+        setError("");
+
+        const response = await getProductById(id);
+        const product = response.product || response;
+
+        setFormData({
+          name: product.name || "",
+          slug: product.slug || "",
+          category:
+            product.category?._id ||
+            product.category ||
+            "",
+          brand: product.brand || "",
+          shortDescription: product.shortDescription || "",
+          description: product.description || "",
+          price:
+            product.price !== undefined
+              ? product.price
+              : "",
+          discountPrice:
+            product.discountPrice !== undefined
+              ? product.discountPrice
+              : "",
+          costPrice:
+            product.costPrice !== undefined
+              ? product.costPrice
+              : "",
+          sku: product.sku || "",
+          stock:
+            product.stock !== undefined
+              ? product.stock
+              : "",
+          unit: product.unit || "Kg",
+          images: product.images || [],
+          featured: Boolean(product.featured),
+          status: product.status || "Active",
+          seoTitle: product.seoTitle || "",
+          seoDescription: product.seoDescription || "",
+        });
+      } catch (error) {
+        console.error("Failed to load product details:", error);
+        setError(
+          error.response?.data?.message ||
+            error.message ||
+            "Failed to load product details"
+        );
+      } finally {
+        setLoadingProduct(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
+  // ==========================================
+  // FETCH CATEGORIES
+  // ==========================================
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoadingCategories(true);
+
+        const response = await getCategories();
+
+        setCategories(
+          response.categories || []
+        );
+      } catch (error) {
+        console.error(
+          "Failed to fetch categories:",
+          error
+        );
+
+        setError(
+          "Failed to load categories"
+        );
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  // ==========================================
+  // HANDLE IMAGE CHANGE
+  // ==========================================
+
+  const handleImageChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: Array.isArray(value)
+        ? value
+        : value
+        ? [value]
+        : [],
+    }));
+  };
+
+  // ==========================================
+  // HANDLE INPUT CHANGE
+  // ==========================================
+
   const handleChange = (e) => {
-
-    const { name, value, type, checked } = e.target;
+    const {
+      name,
+      value,
+      type,
+      checked,
+    } = e.target;
 
     setFormData((prev) => ({
       ...prev,
@@ -51,14 +198,244 @@ const handleImageChange = (e) => {
           ? checked
           : value,
     }));
+  };
 
+  // ==========================================
+  // RESET FORM
+  // ==========================================
+
+  const handleReset = () => {
+    setFormData({
+      name: "",
+      slug: "",
+      category: "",
+      brand: "",
+
+      shortDescription: "",
+      description: "",
+
+      price: "",
+      discountPrice: "",
+      costPrice: "",
+
+      sku: "",
+      stock: "",
+      unit: "Kg",
+
+      images: [],
+
+      featured: false,
+      status: "Active",
+
+      seoTitle: "",
+      seoDescription: "",
+    });
+
+    setError("");
+  };
+
+  // ==========================================
+  // SUBMIT PRODUCT
+  // ==========================================
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    setError("");
+    setLoading(true);
+
+    try {
+      // ========================================
+      // VALIDATION
+      // ========================================
+
+      if (!formData.name.trim()) {
+        throw new Error(
+          "Product name is required"
+        );
+      }
+
+      if (!formData.slug.trim()) {
+        throw new Error(
+          "Product slug is required"
+        );
+      }
+
+      if (!formData.category) {
+        throw new Error(
+          "Please select a category"
+        );
+      }
+
+      if (
+        formData.price === "" ||
+        Number(formData.price) < 0
+      ) {
+        throw new Error(
+          "Valid selling price is required"
+        );
+      }
+
+      // ========================================
+      // FORM DATA
+      // ========================================
+
+      const data = new FormData();
+
+      data.append(
+        "name",
+        formData.name
+      );
+
+      data.append(
+        "slug",
+        formData.slug
+      );
+
+      data.append(
+        "category",
+        formData.category
+      );
+
+      data.append(
+        "brand",
+        formData.brand
+      );
+
+      data.append(
+        "shortDescription",
+        formData.shortDescription
+      );
+
+      data.append(
+        "description",
+        formData.description
+      );
+
+      data.append(
+        "price",
+        formData.price
+      );
+
+      data.append(
+        "discountPrice",
+        formData.discountPrice
+      );
+
+      data.append(
+        "costPrice",
+        formData.costPrice
+      );
+
+      data.append(
+        "sku",
+        formData.sku
+      );
+
+      data.append(
+        "stock",
+        formData.stock
+      );
+
+      data.append(
+        "unit",
+        formData.unit
+      );
+
+      data.append(
+        "featured",
+        String(formData.featured)
+      );
+
+      data.append(
+        "status",
+        formData.status
+      );
+
+      data.append(
+        "seoTitle",
+        formData.seoTitle
+      );
+
+      data.append(
+        "seoDescription",
+        formData.seoDescription
+      );
+
+      // ========================================
+      // MULTIPLE IMAGES
+      // ========================================
+
+      if (
+        formData.images &&
+        formData.images.length > 0
+      ) {
+        formData.images.forEach(
+          (image) => {
+            if (image instanceof File) {
+              data.append(
+                "images",
+                image
+              );
+            }
+          }
+        );
+      }
+
+      // ========================================
+      // API CALL
+      // ========================================
+
+      const response = id
+        ? await updateProduct(id, data)
+        : await createProduct(data);
+
+      console.log(
+        id ? "Product Updated:" : "Product Created:",
+        response
+      );
+
+      alert(
+        id
+          ? "Product updated successfully"
+          : "Product created successfully"
+      );
+
+      // ========================================
+      // REDIRECT
+      // ========================================
+
+      router.push(
+        "/dashboard/products"
+      );
+
+    } catch (error) {
+      console.error(
+        "Create Product Error:",
+        error
+      );
+
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to create product";
+
+      setError(message);
+
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-6"
+    >
 
-    <div className="space-y-6">
-
-      {/* Header */}
+      {/* ========================================
+          HEADER
+      ======================================== */}
 
       <div className="flex items-center justify-between">
 
@@ -68,37 +445,43 @@ const handleImageChange = (e) => {
             href="/dashboard/products"
             className="inline-flex items-center gap-2 text-green-600 font-medium hover:underline"
           >
-
             <IconArrowLeft size={18} />
 
             Back to Products
-
           </Link>
 
           <h1 className="text-3xl font-bold text-gray-900 mt-3">
-
-            Add Product
-
+            {isEditMode ? "Edit Product" : "Add Product"}
           </h1>
 
           <p className="text-gray-500 mt-1">
-
-            Create a new product for your store.
-
+            {isEditMode
+              ? "Update product details."
+              : "Create a new product for your store."}
           </p>
 
         </div>
 
       </div>
 
-      {/* Basic Information */}
+      {/* ========================================
+          ERROR
+      ======================================== */}
+
+      {error && (
+        <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
+      {/* ========================================
+          BASIC INFORMATION
+      ======================================== */}
 
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
 
         <h2 className="text-xl font-bold mb-6">
-
           Basic Information
-
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -108,9 +491,7 @@ const handleImageChange = (e) => {
           <div>
 
             <label className="block text-sm font-medium mb-2">
-
               Product Name
-
             </label>
 
             <input
@@ -119,6 +500,7 @@ const handleImageChange = (e) => {
               value={formData.name}
               onChange={handleChange}
               placeholder="Fresh Tomato"
+              required
               className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-green-600"
             />
 
@@ -129,9 +511,7 @@ const handleImageChange = (e) => {
           <div>
 
             <label className="block text-sm font-medium mb-2">
-
               Slug
-
             </label>
 
             <input
@@ -140,6 +520,7 @@ const handleImageChange = (e) => {
               value={formData.slug}
               onChange={handleChange}
               placeholder="fresh-tomato"
+              required
               className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-green-600"
             />
 
@@ -150,43 +531,44 @@ const handleImageChange = (e) => {
           <div>
 
             <label className="block text-sm font-medium mb-2">
-
               Category
-
             </label>
 
             <select
               name="category"
               value={formData.category}
               onChange={handleChange}
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-green-600"
+              required
+              disabled={loadingCategories}
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-green-600 disabled:bg-gray-100"
             >
 
               <option value="">
-
-                Select Category
-
+                {loadingCategories
+                  ? "Loading categories..."
+                  : "Select Category"}
               </option>
 
-              <option>
-
-                Vegetables
-
-              </option>
-
-              <option>
-
-                Fruits
-
-              </option>
-
-              <option>
-
-                Leafy Vegetables
-
-              </option>
+              {!loadingCategories &&
+                categories.map(
+                  (category) => (
+                    <option
+                      key={category._id}
+                      value={category._id}
+                    >
+                      {category.name}
+                    </option>
+                  )
+                )}
 
             </select>
+
+            {!loadingCategories &&
+              categories.length === 0 && (
+                <p className="text-xs text-red-500 mt-2">
+                  No categories found. Create a category first.
+                </p>
+              )}
 
           </div>
 
@@ -195,9 +577,7 @@ const handleImageChange = (e) => {
           <div>
 
             <label className="block text-sm font-medium mb-2">
-
               Brand
-
             </label>
 
             <input
@@ -218,9 +598,7 @@ const handleImageChange = (e) => {
         <div className="mt-6">
 
           <label className="block text-sm font-medium mb-2">
-
             Short Description
-
           </label>
 
           <textarea
@@ -239,9 +617,7 @@ const handleImageChange = (e) => {
         <div className="mt-6">
 
           <label className="block text-sm font-medium mb-2">
-
             Full Description
-
           </label>
 
           <textarea
@@ -256,7 +632,10 @@ const handleImageChange = (e) => {
         </div>
 
       </div>
-            {/* Pricing */}
+
+      {/* ========================================
+          PRICING
+      ======================================== */}
 
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
 
@@ -265,6 +644,8 @@ const handleImageChange = (e) => {
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+          {/* Selling Price */}
 
           <div>
 
@@ -278,10 +659,14 @@ const handleImageChange = (e) => {
               value={formData.price}
               onChange={handleChange}
               placeholder="0"
+              min="0"
+              required
               className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-green-600"
             />
 
           </div>
+
+          {/* Discount Price */}
 
           <div>
 
@@ -295,10 +680,13 @@ const handleImageChange = (e) => {
               value={formData.discountPrice}
               onChange={handleChange}
               placeholder="0"
+              min="0"
               className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-green-600"
             />
 
           </div>
+
+          {/* Cost Price */}
 
           <div>
 
@@ -312,6 +700,7 @@ const handleImageChange = (e) => {
               value={formData.costPrice}
               onChange={handleChange}
               placeholder="0"
+              min="0"
               className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-green-600"
             />
 
@@ -321,7 +710,9 @@ const handleImageChange = (e) => {
 
       </div>
 
-      {/* Inventory */}
+      {/* ========================================
+          INVENTORY
+      ======================================== */}
 
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
 
@@ -330,6 +721,8 @@ const handleImageChange = (e) => {
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+          {/* SKU */}
 
           <div>
 
@@ -348,6 +741,8 @@ const handleImageChange = (e) => {
 
           </div>
 
+          {/* Stock */}
+
           <div>
 
             <label className="block text-sm font-medium mb-2">
@@ -360,10 +755,13 @@ const handleImageChange = (e) => {
               value={formData.stock}
               onChange={handleChange}
               placeholder="100"
+              min="0"
               className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-green-600"
             />
 
           </div>
+
+          {/* Unit */}
 
           <div>
 
@@ -378,11 +776,25 @@ const handleImageChange = (e) => {
               className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-green-600"
             >
 
-              <option>Kg</option>
-              <option>Gram</option>
-              <option>Piece</option>
-              <option>Dozen</option>
-              <option>Bundle</option>
+              <option value="Kg">
+                Kg
+              </option>
+
+              <option value="Gram">
+                Gram
+              </option>
+
+              <option value="Piece">
+                Piece
+              </option>
+
+              <option value="Dozen">
+                Dozen
+              </option>
+
+              <option value="Bundle">
+                Bundle
+              </option>
 
             </select>
 
@@ -392,26 +804,30 @@ const handleImageChange = (e) => {
 
       </div>
 
-      {/* Product Images */}
+      {/* ========================================
+          PRODUCT IMAGES
+      ======================================== */}
 
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
 
-  <h2 className="text-xl font-bold mb-6">
-    Product Images
-  </h2>
+        <h2 className="text-xl font-bold mb-6">
+          Product Images
+        </h2>
 
-  <ImageUpload
-    label="Product Images"
-    name="images"
-    value={formData.images}
-    onChange={handleImageChange}
-    multiple={true}
-    required
-  />
+        <ImageUpload
+          label="Product Images"
+          name="images"
+          value={formData.images}
+          onChange={handleImageChange}
+          multiple={true}
+          required
+        />
 
-</div>
+      </div>
 
-      {/* Product Settings */}
+      {/* ========================================
+          PRODUCT SETTINGS
+      ======================================== */}
 
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
 
@@ -421,7 +837,9 @@ const handleImageChange = (e) => {
 
         <div className="grid md:grid-cols-2 gap-8">
 
-          <label className="flex items-center gap-3">
+          {/* Featured */}
+
+          <label className="flex items-center gap-3 cursor-pointer">
 
             <input
               type="checkbox"
@@ -437,6 +855,8 @@ const handleImageChange = (e) => {
 
           </label>
 
+          {/* Status */}
+
           <div>
 
             <label className="block text-sm font-medium mb-2">
@@ -450,9 +870,17 @@ const handleImageChange = (e) => {
               className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-green-600"
             >
 
-              <option>Active</option>
-              <option>Inactive</option>
-              <option>Draft</option>
+              <option value="Active">
+                Active
+              </option>
+
+              <option value="Inactive">
+                Inactive
+              </option>
+
+              <option value="Draft">
+                Draft
+              </option>
 
             </select>
 
@@ -461,7 +889,10 @@ const handleImageChange = (e) => {
         </div>
 
       </div>
-            {/* SEO Information */}
+
+      {/* ========================================
+          SEO
+      ======================================== */}
 
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
 
@@ -470,6 +901,8 @@ const handleImageChange = (e) => {
         </h2>
 
         <div className="space-y-6">
+
+          {/* SEO Title */}
 
           <div>
 
@@ -487,6 +920,8 @@ const handleImageChange = (e) => {
             />
 
           </div>
+
+          {/* SEO Description */}
 
           <div>
 
@@ -509,34 +944,52 @@ const handleImageChange = (e) => {
 
       </div>
 
-      {/* Action Buttons */}
+      {/* ========================================
+          ACTION BUTTONS
+      ======================================== */}
 
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
 
         <div className="flex flex-col sm:flex-row justify-end gap-4">
 
           <button
-            type="reset"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-gray-300 hover:bg-gray-100 transition"
+            type="button"
+            onClick={handleReset}
+            disabled={loading}
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-gray-300 hover:bg-gray-100 transition disabled:opacity-50"
           >
             <IconRefresh size={20} />
+
             Reset
           </button>
 
           <button
             type="submit"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-green-600 text-white hover:bg-green-700 transition"
+            disabled={loading}
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-green-600 text-white hover:bg-green-700 transition disabled:bg-green-400 disabled:cursor-not-allowed"
           >
-            <IconDeviceFloppy size={20} />
-            Save Product
+
+            {loading ? (
+              <>
+                <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+
+                Saving...
+              </>
+            ) : (
+              <>
+                <IconDeviceFloppy size={20} />
+
+                Save Product
+              </>
+            )}
+
           </button>
 
         </div>
 
       </div>
 
-    </div>
-
+    </form>
   );
-
 }
+

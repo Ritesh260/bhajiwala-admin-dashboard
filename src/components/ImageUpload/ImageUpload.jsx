@@ -20,13 +20,27 @@ export default function ImageUpload({
 }) {
   const inputRef = useRef(null);
 
-  const [preview, setPreview] = useState(value);
+  const [preview, setPreview] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState("");
 
+  const getPreviewUrl = (input) => {
+    if (!input) return null;
+    if (Array.isArray(input)) {
+      const first = input[0];
+      if (!first) return null;
+      if (typeof first === "string") return first;
+      if (first instanceof File) return URL.createObjectURL(first);
+      return null;
+    }
+    if (typeof input === "string") return input;
+    if (input instanceof File) return URL.createObjectURL(input);
+    return null;
+  };
+
   useEffect(() => {
-  setPreview(value || null);
-}, [value]);
+    setPreview(getPreviewUrl(value));
+  }, [value]);
 
   const openFilePicker = () => {
     inputRef.current?.click();

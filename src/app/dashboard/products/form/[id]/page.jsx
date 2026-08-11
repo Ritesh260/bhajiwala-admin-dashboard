@@ -1,5 +1,7 @@
 import ProductForm from "@/views/dashboard/products/ProductForm";
 
-export default function Page() {
-  return <ProductForm />;
+export default async function Page({ params }) {
+  const { id } = await params;
+
+  return <ProductForm id={id} />;
 }
