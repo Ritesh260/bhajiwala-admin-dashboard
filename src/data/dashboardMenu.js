@@ -81,14 +81,46 @@ const dashboardMenu = [
     order: 5,
   },
 
-  {
-    id: "coupons",
-    title: "Coupons",
-    icon: IconTicket,
-    // href: "/dashboard/coupons",/
-    href: "#",
-    order: 6,
-  },
+  
+{
+  id: "offers",
+  title: "Offer Management",
+  icon: IconTicket,
+  order: 6,
+  children: [
+    {
+      id: "offers-list",
+      title: "All Offers",
+      href: "/dashboard/offers",
+      icon: IconList,
+    },
+    {
+      id: "today-offers",
+      title: "Today's Offers",
+      href: "/dashboard/offers/today",
+      icon: IconList,
+    },
+    {
+      id: "discount-coupons",
+      title: "Discount Coupons",
+      href: "/dashboard/offers/discounts",
+      icon: IconList,
+    },
+    {
+      id: "combo-offers",
+      title: "Combo Offers",
+      href: "/dashboard/offers/combos",
+      icon: IconList,
+    },
+    {
+      id: "seasonal-offers",
+      title: "Seasonal Offers",
+      href: "/dashboard/offers/seasonal",
+      icon: IconList,
+    },
+  ],
+},
+
 
   {
     id: "delivery",
